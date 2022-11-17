@@ -1,0 +1,262 @@
+'use strict';
+
+import {
+  queue,
+} from '../CommandQueue.js';
+import {
+  SearchEngine,
+} from '../SearchEngine.js';
+import {
+  tomeBinVerses,
+} from '../data/binIdx.js';
+import {
+  tomeDb,
+} from '../data/tomeDb.js';
+
+const searchResultReroute = [
+  'search-filter', 'search-history',
+];
+const validTasks = [
+  'search-result', 'search-lookup', 'search-filter', 'search-history',
+];
+
+const DEFAULT_QUERY = 'day of the lord';
+
+class SearchModel {
+
+  constructor() {
+    this.initialize();
+  }
+
+  addHistory() {
+    if (this.searchHistory.indexOf(this.searchQuery) === -1) {
+      this.searchHistory = [this.searchQuery, ...this.searchHistory];
+      this.updateHistory();
+    }
+  }
+
+  filterChange(searchFilter) {
+    this.searchFilter = searchFilter;
+    this.saveFilter();
+    queue.publish('search.filter.update', this.searchFilter);
+  }
+
+  filterIsValid(searchFilter) {
+    let result = false;
+    if (typeof searchFilter === 'object') {
+      if (searchFilter.bookIdx && searchFilter.chapterIdx) {
+        result = true;
+      }
+    }
+    return result;
+  }
+
+  historyChange(searchHistory) {
+    this.searchHistory = searchHistory;
+    this.saveHistory();
+    queue.publish('search.history.update', this.searchHistory);
+  }
+
+  historyClear() {
+    this.searchHistory = [];
+    this.updateHistory();
+  }
+
+  historyDelete(str) {
+    let index = this.searchHistory.indexOf(str);
+    this.searchHistory.splice(index, 1);
+    this.updateHistory();
+  }
+
+  historyIsValid(searchHistory) {
+    return searchHistory.some((x) => {
+      return typeof x === 'string';
+    });
+  }
+
+  initialize() {
+    this.engine = new SearchEngine();
+    this.subscribe();
+  }
+
+  async queryChange(searchQuery) {
+    let rig = await this.engine.performSearch(searchQuery);
+    if (rig.state === 'ERROR') {
+      let message;
+      if (rig.type === 'EMPTY') {
+        message = 'Enter a search expression.';
+      } else if (rig.type === 'INVALID') {
+        message = 'Invalid query expression.';
+      } else if (rig.wordStatus !== 'OK') {
+        message = rig.wordStatus;
+      }
+      queue.publish('search.query.error', message);
+    } else {
+      this.rig = rig;
+      this.searchQuery = searchQuery;
+      this.saveQuery();
+      this.addHistory();
+      await this.updateSearchVerses();
+      queue.publish('rig.update', this.rig);
+      this.resetFilter();
+      queue.publish('search.query.update', this.searchQuery);
+    }
+  }
+
+  resetFilter() {
+    let filter = this.tomeFilter();
+    this.filterChange(filter);
+  }
+
+  async restore() {
+    this.restoreTask();
+    this.restoreHistory();
+    await this.restoreQuery();
+    this.restoreFilter();
+  }
+
+  restoreFilter() {
+    let defaultFilter = this.tomeFilter();
+    let searchFilter = localStorage.getItem('searchFilter');
+    if (!searchFilter) {
+      searchFilter = defaultFilter;
+    } else {
+      try {
+        searchFilter = JSON.parse(searchFilter);
+      } catch (error) {
+        searchFilter = defaultFilter;
+      }
+      if (!this.filterIsValid(searchFilter)) {
+        searchFilter = defaultFilter;
+      }
+    }
+    this.filterChange(searchFilter);
+  }
+
+  restoreHistory() {
+    let defaultHistory = [];
+    let searchHistory = localStorage.getItem('searchHistory');
+    if (!searchHistory) {
+      searchHistory = defaultHistory;
+    } else {
+      try {
+        searchHistory = JSON.parse(searchHistory);
+      } catch (error) {
+        searchHistory = defaultHistory;
+      }
+      if (!Array.isArray(searchHistory)) {
+        searchHistory = defaultHistory;
+      } else {
+        if (!this.historyIsValid(searchHistory)) {
+          searchHistory = defaultHistory;
+        }
+      }
+    }
+    this.historyChange(searchHistory);
+  }
+
+  async restoreQuery() {
+    let defaultQuery = DEFAULT_QUERY;
+    let searchQuery = localStorage.getItem('searchQuery');
+    if (!searchQuery) {
+      searchQuery = defaultQuery;
+    } else {
+      try {
+        searchQuery = JSON.parse(searchQuery);
+      } catch (error) {
+        searchQuery = defaultQuery;
+      }
+      if (typeof searchQuery !== 'string') {
+        searchQuery = defaultQuery;
+      }
+    }
+    await this.queryChange(searchQuery);
+  }
+
+  restoreTask() {
+    let defaultTask = 'search-result';
+    let searchTask = localStorage.getItem('searchTask');
+    if (!searchTask) {
+      searchTask = defaultTask;
+    } else {
+      searchTask = JSON.parse(searchTask);
+    }
+    if (searchResultReroute.includes(searchTask)) {
+      searchTask = 'search-result';
+    } else if (!validTasks.includes(searchTask)) {
+      searchTask = defaultTask;
+    }
+    this.taskChange(searchTask);
+  }
+
+  saveFilter() {
+    localStorage.setItem('searchFilter',
+      JSON.stringify(this.searchFilter));
+  }
+
+  saveHistory() {
+    localStorage.setItem('searchHistory',
+      JSON.stringify(this.searchHistory));
+  }
+
+  saveQuery() {
+    localStorage.setItem('searchQuery',
+      JSON.stringify(this.searchQuery));
+  }
+
+  saveTask() {
+    localStorage.setItem('searchTask',
+      JSON.stringify(this.searchTask));
+  }
+
+  subscribe() {
+    queue.subscribe('search.filter.change', (filter) => {
+      this.filterChange(filter);
+    });
+
+    queue.subscribe('search.history.clear', () => {
+      this.historyClear();
+    });
+    queue.subscribe('search.history.delete', (query) => {
+      this.historyDelete(query);
+    });
+
+    queue.subscribe('search.query.change', async (query) => {
+      await this.queryChange(query);
+    });
+
+    queue.subscribe('search.restore', async () => {
+      await this.restore();
+    });
+    queue.subscribe('search.task.change', (searchTask) => {
+      this.taskChange(searchTask);
+    });
+  }
+
+  taskChange(searchTask) {
+    this.searchTask = searchTask;
+    this.saveTask();
+    queue.publish('search.task.update', this.searchTask);
+  }
+
+  tomeFilter() {
+    return {
+      bookIdx: -1,
+      chapterIdx: -1,
+    };
+  }
+
+  updateHistory() {
+    this.saveHistory();
+    queue.publish('search.history.update', this.searchHistory);
+  }
+
+  async updateSearchVerses() {
+    this.searchVerseObjs = await tomeDb.verses.bulkGet(
+      this.rig.tomeBin[tomeBinVerses]);
+    queue.publish('search.verses.update', this.searchVerseObjs);
+  }
+
+}
+
+export { SearchModel };

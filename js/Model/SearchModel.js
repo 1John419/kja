@@ -20,7 +20,7 @@ const validTasks = [
   'search-result', 'search-lookup', 'search-filter', 'search-history',
 ];
 
-const DEFAULT_QUERY = 'day of the lord';
+const DEFAULT_QUERY = 'lord of israel';
 
 class SearchModel {
 

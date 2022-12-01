@@ -415,6 +415,12 @@
     return actionMenu;
   };
 
+  const templateBtnBanner = (cssModifier, ariaLabel) => {
+    let btnIcon = templateElement(
+      'button', 'btn-banner', cssModifier, ariaLabel);
+    return btnIcon;
+  };
+
   const templateBtnIcon = (svgId, cssModifier, ariaLabel) => {
     let svgTag = document.createElementNS(svgNS, 'svg');
     svgTag.classList.add('icon-svg');
@@ -521,6 +527,9 @@
       if (tool.type === 'btn') {
         element = templateBtnIcon(tool.icon, tool.icon, tool.ariaLabel);
         toolbarUpper.appendChild(element);
+      } else if (tool.type === 'btn-banner') {
+        element = templateBtnBanner(tool.cssModifier, tool.ariaLabel);
+        toolbarUpper.appendChild(element);
       } else if (tool.type === 'banner') {
         element = templateElement(
           'div', 'banner', tool.cssModifier, null, tool.text);
@@ -564,7 +573,7 @@
 
   const upperToolSet$h = [
     { type: 'btn', icon: 'prev', ariaLabel: 'Previous Chapter' },
-    { type: 'banner', cssModifier: 'read', text: null },
+    { type: 'btn-banner', cssModifier: 'read', text: 'Toogle Clipboard' },
     { type: 'btn', icon: 'next', ariaLabel: 'Next Chapter' },
   ];
 
@@ -683,7 +692,7 @@
       this.body = document.querySelector('body');
 
       this.btnPrev = this.toolbarUpper.querySelector('.btn-icon--prev');
-      this.banner = this.toolbarUpper.querySelector('.banner--read');
+      this.btnBanner = this.toolbarUpper.querySelector('.btn-banner--read');
       this.btnNext = this.toolbarUpper.querySelector('.btn-icon--next');
 
       this.btnNavigator = this.toolbarLower.querySelector('.btn-icon--navigator');
@@ -719,6 +728,7 @@
       this.subscribe();
       this.lastFont = null;
       this.lastFontSize = null;
+      this.clipboardMode = false;
     }
 
     listClick(event) {
@@ -726,7 +736,12 @@
       if (!document.getSelection().toString()) {
         let verse = event.target.closest('div.verse');
         if (verse) {
-          this.verseClick(verse);
+          if (this.clipboardMode) {
+            let text = `${this.btnBanner.textContent}:${verse.textContent}`;
+            navigator.clipboard.writeText(text);
+          } else {
+            this.verseClick(verse);
+          }
         }
       }
     }
@@ -888,24 +903,39 @@
       });
     }
 
+    themeUpdate(theme) {
+      this.theme = theme;
+      this.changeTheme();
+      this.lastTheme = this.theme;
+    }
+
+    toogleClipboardMode() {
+      if (this.clipboardMode) {
+        this.btnBanner.classList.remove('btn-banner--active');
+      } else {
+        this.btnBanner.classList.add('btn-banner--active');
+      }
+      this.clipboardMode = !this.clipboardMode;
+    }
+
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnColumnMode ||
-          !target.classList.contains('btn-icon--active')
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnColumnMode ||
+          !btn.classList.contains('btn-icon--active')
         ) {
-          if (target === this.btnNavigator) {
+          if (btn === this.btnNavigator) {
             queue.publish('sidebar.select', 'navigator');
-          } else if (target === this.btnBookmark) {
+          } else if (btn === this.btnBookmark) {
             queue.publish('sidebar.select', 'bookmark');
-          } else if (target === this.btnSearch) {
+          } else if (btn === this.btnSearch) {
             queue.publish('sidebar.select', 'search');
-          } else if (target === this.btnSetting) {
+          } else if (btn === this.btnSetting) {
             queue.publish('sidebar.select', 'setting');
-          } else if (target === this.btnHelp) {
+          } else if (btn === this.btnHelp) {
             queue.publish('sidebar.select', 'help');
-          } else if (target === this.btnColumnMode) {
+          } else if (btn === this.btnColumnMode) {
             queue.publish('read.column-mode.click', null);
           }
         }
@@ -914,24 +944,32 @@
 
     toolbarUpperClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnPrev) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnPrev) {
           queue.publish('read.prev.chapter', 1);
-        } else if (target === this.btnNext) {
+        } else if (btn === this.btnNext) {
           queue.publish('read.next.chapter', 2);
         }
       }
     }
 
-    themeUpdate(theme) {
-      this.theme = theme;
-      this.changeTheme();
-      this.lastTheme = this.theme;
+    toolbarUpperClick(event) {
+      event.preventDefault();
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBanner) {
+          this.toogleClipboardMode();
+        } else if (btn === this.btnPrev) {
+          queue.publish('read.prev.chapter', 1);
+        } else if (btn === this.btnNext) {
+          queue.publish('read.next.chapter', 2);
+        }
+      }
     }
 
     updateBanner() {
-      this.banner.textContent = tomeChapters[this.chapterIdx][chapterName];
+      this.btnBanner.textContent = tomeChapters[this.chapterIdx][chapterName];
     }
 
     updateColumnMode() {
@@ -1405,10 +1443,10 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-book')) {
-          this.contentClick(target);
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-book')) {
+          this.contentClick(btn);
         }
       }
     }
@@ -1432,11 +1470,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('navigator.back', null);
-        } else if (target === this.btnChapter) {
+        } else if (btn === this.btnChapter) {
           queue.publish('navigator-chapter', null);
         }
       }
@@ -1544,10 +1582,10 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-chapter')) {
-          this.contentClick(target);
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-chapter')) {
+          this.contentClick(btn);
         }
       }
     }
@@ -1579,11 +1617,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('navigator.back', null);
-        } else if (target === this.btnBook) {
+        } else if (btn === this.btnBook) {
           queue.publish('navigator-book', null);
         }
       }
@@ -2302,7 +2340,7 @@
   ];
 
   const upperToolSet$e = [
-    { type: 'banner', cssModifier: 'bookmark-list', text: null },
+    { type: 'btn-banner', cssModifier: 'bookmark-list', ariaLbael: 'Toogle Clipboard' },
   ];
 
   class BookmarkListView {
@@ -2341,6 +2379,9 @@
       });
       this.toolbarLower.addEventListener('click', (event) => {
         this.toolbarLowerClick(event);
+      });
+      this.toolbarUpper.addEventListener('click', (event) => {
+        this.toolbarUpperClick(event);
       });
     }
 
@@ -2433,16 +2474,33 @@
       this.expandMode = expandMode;
       if (this.expandMode) {
         this.btnExpandMode.classList.add('btn-icon--active');
+        this.list.classList.add(this.font.fontClass);
+        this.list.classList.add(this.fontSize);
       } else {
         this.btnExpandMode.classList.remove('btn-icon--active');
+        this.list.classList.remove(this.font.fontClass);
+        this.list.classList.remove(this.fontSize);
       }
       this.updateBookmarks();
+    }
+
+    fontSizeUpdate(fontSize) {
+      this.fontSize = fontSize;
+      this.updateFontSize();
+      this.lastFontSize = this.fontSize;
+    }
+
+    fontUpdate(font) {
+      this.font = font;
+      this.updateFont();
+      this.lastFont = this.font;
+      this.lastFontSize = null;
     }
 
     getElements() {
       this.btnFolderAdd = this.toolbarUpper.querySelector(
         '.btn-icon--folder-add');
-      this.banner = this.toolbarUpper.querySelector('.banner--bookmark-list');
+      this.btnBanner = this.toolbarUpper.querySelector('.btn-banner--bookmark-list');
 
       this.btnUp = this.actionMenu.querySelector('.btn-icon--up');
       this.btnDown = this.actionMenu.querySelector('.btn-icon--down');
@@ -2471,15 +2529,17 @@
       this.getElements();
       this.addListeners();
       this.subscribe();
+      this.lastFont = null;
+      this.clipboardMode = false;
     }
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
+      let btn = event.target.closest('button');
       if (this.expandMode) {
-        this.verseClick(target);
+        this.verseClick(btn);
       } else {
-        this.entryClick(target);
+        this.entryClick(btn);
       }
     }
 
@@ -2520,22 +2580,52 @@
       queue.subscribe('bookmark.expand-mode.update', (expandMode) => {
         this.expandModeUpdate(expandMode);
       });
+
+      queue.subscribe('font.update', (font) => {
+        this.fontUpdate(font);
+      });
+
+      queue.subscribe('font-size.update', (fontSize) => {
+        this.fontSizeUpdate(fontSize);
+      });
+    }
+
+    toogleClipboardMode() {
+      if (this.clipboardMode) {
+        this.btnBanner.classList.remove('btn-banner--active');
+      } else {
+        this.btnBanner.classList.add('btn-banner--active');
+      }
+      this.clipboardMode = !this.clipboardMode;
     }
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('bookmark.back', null);
-        } else if (target === this.btnSortAscend) {
+        } else if (btn === this.btnSortAscend) {
           queue.publish('bookmark-list.sort-ascend', null);
-        } else if (target === this.btnSortInvert) {
+        } else if (btn === this.btnSortInvert) {
           queue.publish('bookmark-list.sort-invert', null);
-        } else if (target === this.btnBookmarkFolder) {
+        } else if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
-        } else if (target === this.btnExpandMode) {
+        } else if (btn === this.btnExpandMode) {
           queue.publish('bookmark-list.expand-mode.click', null);
+        }
+      }
+    }
+
+    toolbarUpperClick(event) {
+      event.preventDefault();
+      if (!this.expandMode) {
+        return;
+      }
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBanner) {
+          this.toogleClipboardMode();
         }
       }
     }
@@ -2545,7 +2635,7 @@
     }
 
     updateBanner() {
-      this.banner.innerHTML = `${this.activeFolder.name}`;
+      this.btnBanner.innerHTML = `${this.activeFolder.name}`;
     }
 
     updateActiveFolder(activeFolder) {
@@ -2578,11 +2668,36 @@
       this.scroll.scrollTop = scrollSave;
     }
 
+    updateFontSize() {
+      if (!this.expandMode) {
+        return;
+      }
+      if (this.lastFontSize) {
+        this.list.classList.remove(this.lastFontSize);
+      }
+      this.list.classList.add(this.fontSize);
+    }
+
+    updateFont() {
+      if (!this.expandMode) {
+        return;
+      }
+      if (this.lastFont) {
+        this.list.classList.remove(this.lastFont.fontClass);
+      }
+      this.list.classList.add(this.font.fontClass);
+    }
+
     verseClick(target) {
       if (target) {
         if (target.classList.contains('btn-result')) {
-          let verseIdx = parseInt(target.dataset.verseIdx);
-          queue.publish('bookmark-list.select', verseIdx);
+          if (this.clipboardMode) {
+            let text = target.textContent;
+            navigator.clipboard.writeText(text);
+          } else {
+            let verseIdx = parseInt(target.dataset.verseIdx);
+            queue.publish('bookmark-list.select', verseIdx);
+          }
         }
       }
     }
@@ -2717,10 +2832,10 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-icon--h-menu')) {
-          let entry = target.previousSibling;
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-icon--h-menu')) {
+          let entry = btn.previousSibling;
           this.menuClick(entry);
         }
       }
@@ -2784,9 +2899,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -2954,13 +3069,13 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-entry')) {
-          let folderName = target.textContent;
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-entry')) {
+          let folderName = btn.textContent;
           queue.publish('bookmark-folder.select', folderName);
-        } else if (target.classList.contains('btn-icon--h-menu')) {
-          let entry = target.previousSibling;
+        } else if (btn.classList.contains('btn-icon--h-menu')) {
+          let entry = btn.previousSibling;
           this.menuClick(entry);
         }
       }
@@ -3000,17 +3115,17 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('bookmark.back', null);
-        } else if (target === this.btnBookmarkList) {
+        } else if (btn === this.btnBookmarkList) {
           queue.publish('bookmark-list', null);
-        } else if (target === this.btnBookmarkFolderAdd) {
+        } else if (btn === this.btnBookmarkFolderAdd) {
           queue.publish('bookmark-folder-add', null);
-        } else if (target === this.btnExport) {
+        } else if (btn === this.btnExport) {
           queue.publish('bookmark-export', null);
-        } else if (target === this.btnImport) {
+        } else if (btn === this.btnImport) {
           queue.publish('bookmark-import', null);
         }
       }
@@ -3158,9 +3273,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -3273,9 +3388,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -3424,9 +3539,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -3529,9 +3644,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -3655,9 +3770,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBookmarkFolder) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBookmarkFolder) {
           queue.publish('bookmark-folder', null);
         }
       }
@@ -4286,7 +4401,7 @@
     'search-result', 'search-lookup', 'search-filter', 'search-history',
   ];
 
-  const DEFAULT_QUERY = 'day of the lord';
+  const DEFAULT_QUERY = 'lord of israel';
 
   class SearchModel {
 
@@ -4533,7 +4648,7 @@
   ];
 
   const upperToolSet$6 = [
-    { type: 'banner', cssModifier: 'search-result', text: null },
+    { type: 'btn-banner', cssModifier: 'search-result', text: 'Toogle Clipboard' },
   ];
 
   const binIdx = 0;
@@ -4554,6 +4669,9 @@
       });
       this.toolbarLower.addEventListener('click', (event) => {
         this.toolbarLowerClick(event);
+      });
+      this.toolbarUpper.addEventListener('click', (event) => {
+        this.toolbarUpperClick(event);
       });
     }
 
@@ -4686,7 +4804,7 @@
     }
 
     getElements() {
-      this.banner = this.toolbarUpper.querySelector('.banner--search-result');
+      this.btnBanner = this.toolbarUpper.querySelector('.btn-banner--search-result');
 
       this.btnBack = this.toolbarLower.querySelector('.btn-icon--back');
       this.btnFilter = this.toolbarLower.querySelector(
@@ -4708,14 +4826,19 @@
       this.subscribe();
       this.lastFont = null;
       this.lastFontSize = null;
+      this.clipboardMode = false;
     }
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target;
-      let btn = target.closest('button');
-      let verseIdx = parseInt(btn.dataset.verseIdx);
-      queue.publish('search-result.read-select', verseIdx);
+      let btn = event.target.closest('button');
+      if (this.clipboardMode) {
+        let text = btn.textContent;
+        navigator.clipboard.writeText(text);
+      } else {
+        let verseIdx = parseInt(btn.dataset.verseIdx);
+        queue.publish('search-result.read-select', verseIdx);
+      }
     }
 
     loadMoreClick(event) {
@@ -4793,24 +4916,43 @@
       });
     }
 
+    toogleClipboardMode() {
+      if (this.clipboardMode) {
+        this.btnBanner.classList.remove('btn-banner--active');
+      } else {
+        this.btnBanner.classList.add('btn-banner--active');
+      }
+      this.clipboardMode = !this.clipboardMode;
+    }
+
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('search.back', null);
-        } else if (target === this.btnFilter) {
+        } else if (btn === this.btnFilter) {
           queue.publish('search-filter', null);
-        } else if (target === this.btnHistory) {
+        } else if (btn === this.btnHistory) {
           queue.publish('search-history', null);
-        } else if (target === this.btnSearchLookup) {
+        } else if (btn === this.btnSearchLookup) {
           queue.publish('search-lookup', null);
         }
       }
     }
 
+    toolbarUpperClick(event) {
+      event.preventDefault();
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBanner) {
+          this.toogleClipboardMode();
+        }
+      }
+    }
+
     updateBanner() {
-      this.banner.innerHTML = `${this.citation} ` +
+      this.btnBanner.innerHTML = `${this.citation} ` +
         `(${this.wordCount}/${this.verseCount})<br>` +
         `${this.rig.query}`;
     }
@@ -4997,14 +5139,14 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-filter')) {
-          this.filterClick(target);
-        } else if (target.classList.contains('btn-icon--filter-down')) {
-          this.foldClick(target);
-        } else if (target.classList.contains('btn-icon--filter-next')) {
-          this.unfoldClick(target);
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-filter')) {
+          this.filterClick(btn);
+        } else if (btn.classList.contains('btn-icon--filter-down')) {
+          this.foldClick(btn);
+        } else if (btn.classList.contains('btn-icon--filter-next')) {
+          this.unfoldClick(btn);
         }
       }
     }
@@ -5042,9 +5184,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnSearchResult) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnSearchResult) {
           queue.publish('search-result', null);
         }
       }
@@ -5186,13 +5328,13 @@
 
     listClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-entry--history')) {
-          let query = target.textContent;
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-entry--history')) {
+          let query = btn.textContent;
           queue.publish('search-history.select', query);
-        } else if (target.classList.contains('btn-icon--delete')) {
-          let entry = target.previousSibling;
+        } else if (btn.classList.contains('btn-icon--delete')) {
+          let entry = btn.previousSibling;
           let query = entry.textContent;
           queue.publish('search-history.delete', query);
         }
@@ -5218,11 +5360,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnResult) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnResult) {
           queue.publish('search-result', null);
-        } else if (target === this.btnHistoryClear) {
+        } else if (btn === this.btnHistoryClear) {
           queue.publish('search-history.clear', null);
         }
       }
@@ -5371,11 +5513,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('search.back', null);
-        } else if (target === this.btnResult) {
+        } else if (btn === this.btnResult) {
           queue.publish('search-result', null);
         }
       }
@@ -6132,9 +6274,9 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('setting.back', null);
         }
       }
@@ -6378,8 +6520,8 @@
     'help-read', 'help-topic',
   ];
   const validTopics = [
-    'about', 'bookmark', 'help', 'navigator', 'overview', 'read', 'search',
-    'setting', 'thats-my-king',
+    'about', 'bookmark', 'clipboard-mode', 'help', 'navigator', 'overview',
+    'read', 'search', 'setting', 'thats-my-king',
   ];
 
   class HelpModel {
@@ -6480,6 +6622,7 @@
     { topic: 'about', name: 'About' },
     { topic: 'overview', name: 'Overview' },
     { topic: 'read', name: 'Read' },
+    { topic: 'clipboard-mode', name: 'Clipboard Mode' },
     { topic: 'navigator', name: 'Navigator' },
     { topic: 'bookmark', name: 'Bookmark' },
     { topic: 'search', name: 'Search' },
@@ -6557,10 +6700,10 @@
 
     scrollClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target.classList.contains('btn-topic')) {
-          let helpTopic = target.dataset.topic;
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('btn-topic')) {
+          let helpTopic = btn.dataset.topic;
           queue.publish('help-topic.select', helpTopic);
         }
       }
@@ -6581,11 +6724,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('help.back', null);
-        } else if (target === this.btnHelpRead) {
+        } else if (btn === this.btnHelpRead) {
           queue.publish('help-read', null);
         }
       }
@@ -6667,11 +6810,11 @@
 
     toolbarLowerClick(event) {
       event.preventDefault();
-      let target = event.target.closest('button');
-      if (target) {
-        if (target === this.btnBack) {
+      let btn = event.target.closest('button');
+      if (btn) {
+        if (btn === this.btnBack) {
           queue.publish('help.back', null);
-        } else if (target === this.btnHelpTopic) {
+        } else if (btn === this.btnHelpTopic) {
           queue.publish('help-topic', null);
         }
       }

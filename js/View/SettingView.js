@@ -288,9 +288,9 @@ class SettingView {
 
   toolbarLowerClick(event) {
     event.preventDefault();
-    let target = event.target.closest('button');
-    if (target) {
-      if (target === this.btnBack) {
+    let btn = event.target.closest('button');
+    if (btn) {
+      if (btn === this.btnBack) {
         queue.publish('setting.back', null);
       }
     }

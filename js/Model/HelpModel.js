@@ -8,8 +8,8 @@ const validTasks = [
   'help-read', 'help-topic',
 ];
 const validTopics = [
-  'about', 'bookmark', 'help', 'navigator', 'overview', 'read', 'search',
-  'setting', 'thats-my-king',
+  'about', 'bookmark', 'clipboard-mode', 'help', 'navigator', 'overview',
+  'read', 'search', 'setting', 'thats-my-king',
 ];
 
 class HelpModel {

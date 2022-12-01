@@ -36,7 +36,7 @@ const lowerToolSet = [
 
 const upperToolSet = [
   { type: 'btn', icon: 'prev', ariaLabel: 'Previous Chapter' },
-  { type: 'banner', cssModifier: 'read', text: null },
+  { type: 'btn-banner', cssModifier: 'read', text: 'Toogle Clipboard' },
   { type: 'btn', icon: 'next', ariaLabel: 'Next Chapter' },
 ];
 
@@ -157,7 +157,7 @@ class ReadView {
     this.body = document.querySelector('body');
 
     this.btnPrev = this.toolbarUpper.querySelector('.btn-icon--prev');
-    this.banner = this.toolbarUpper.querySelector('.banner--read');
+    this.btnBanner = this.toolbarUpper.querySelector('.btn-banner--read');
     this.btnNext = this.toolbarUpper.querySelector('.btn-icon--next');
 
     this.btnNavigator = this.toolbarLower.querySelector('.btn-icon--navigator');
@@ -193,6 +193,7 @@ class ReadView {
     this.subscribe();
     this.lastFont = null;
     this.lastFontSize = null;
+    this.clipboardMode = false;
   }
 
   listClick(event) {
@@ -200,7 +201,12 @@ class ReadView {
     if (!document.getSelection().toString()) {
       let verse = event.target.closest('div.verse');
       if (verse) {
-        this.verseClick(verse);
+        if (this.clipboardMode) {
+          let text = `${this.btnBanner.textContent}:${verse.textContent}`;
+          navigator.clipboard.writeText(text);
+        } else {
+          this.verseClick(verse);
+        }
       }
     }
   }
@@ -362,24 +368,39 @@ class ReadView {
     });
   }
 
+  themeUpdate(theme) {
+    this.theme = theme;
+    this.changeTheme();
+    this.lastTheme = this.theme;
+  }
+
+  toogleClipboardMode() {
+    if (this.clipboardMode) {
+      this.btnBanner.classList.remove('btn-banner--active');
+    } else {
+      this.btnBanner.classList.add('btn-banner--active');
+    }
+    this.clipboardMode = !this.clipboardMode;
+  }
+
   toolbarLowerClick(event) {
     event.preventDefault();
-    let target = event.target.closest('button');
-    if (target) {
-      if (target === this.btnColumnMode ||
-        !target.classList.contains('btn-icon--active')
+    let btn = event.target.closest('button');
+    if (btn) {
+      if (btn === this.btnColumnMode ||
+        !btn.classList.contains('btn-icon--active')
       ) {
-        if (target === this.btnNavigator) {
+        if (btn === this.btnNavigator) {
           queue.publish('sidebar.select', 'navigator');
-        } else if (target === this.btnBookmark) {
+        } else if (btn === this.btnBookmark) {
           queue.publish('sidebar.select', 'bookmark');
-        } else if (target === this.btnSearch) {
+        } else if (btn === this.btnSearch) {
           queue.publish('sidebar.select', 'search');
-        } else if (target === this.btnSetting) {
+        } else if (btn === this.btnSetting) {
           queue.publish('sidebar.select', 'setting');
-        } else if (target === this.btnHelp) {
+        } else if (btn === this.btnHelp) {
           queue.publish('sidebar.select', 'help');
-        } else if (target === this.btnColumnMode) {
+        } else if (btn === this.btnColumnMode) {
           queue.publish('read.column-mode.click', null);
         }
       }
@@ -388,24 +409,32 @@ class ReadView {
 
   toolbarUpperClick(event) {
     event.preventDefault();
-    let target = event.target.closest('button');
-    if (target) {
-      if (target === this.btnPrev) {
+    let btn = event.target.closest('button');
+    if (btn) {
+      if (btn === this.btnPrev) {
         queue.publish('read.prev.chapter', 1);
-      } else if (target === this.btnNext) {
+      } else if (btn === this.btnNext) {
         queue.publish('read.next.chapter', 2);
       }
     }
   }
 
-  themeUpdate(theme) {
-    this.theme = theme;
-    this.changeTheme();
-    this.lastTheme = this.theme;
+  toolbarUpperClick(event) {
+    event.preventDefault();
+    let btn = event.target.closest('button');
+    if (btn) {
+      if (btn === this.btnBanner) {
+        this.toogleClipboardMode();
+      } else if (btn === this.btnPrev) {
+        queue.publish('read.prev.chapter', 1);
+      } else if (btn === this.btnNext) {
+        queue.publish('read.next.chapter', 2);
+      }
+    }
   }
 
   updateBanner() {
-    this.banner.textContent = tomeChapters[this.chapterIdx][chapterName];
+    this.btnBanner.textContent = tomeChapters[this.chapterIdx][chapterName];
   }
 
   updateColumnMode() {

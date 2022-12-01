@@ -411,18 +411,6 @@ class ReadView {
     event.preventDefault();
     let btn = event.target.closest('button');
     if (btn) {
-      if (btn === this.btnPrev) {
-        queue.publish('read.prev.chapter', 1);
-      } else if (btn === this.btnNext) {
-        queue.publish('read.next.chapter', 2);
-      }
-    }
-  }
-
-  toolbarUpperClick(event) {
-    event.preventDefault();
-    let btn = event.target.closest('button');
-    if (btn) {
       if (btn === this.btnBanner) {
         this.toogleClipboardMode();
       } else if (btn === this.btnPrev) {

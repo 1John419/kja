@@ -69,8 +69,8 @@ class BookmarkFolderRenameView {
 
   dialogClick(event) {
     event.preventDefault();
-    let target = event.target;
-    if (target === this.btnSave) {
+    let btn = event.target.closest('button');
+    if (btn === this.btnSave) {
       this.saveClick();
     }
   }

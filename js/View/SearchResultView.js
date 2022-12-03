@@ -244,8 +244,8 @@ class SearchResultView {
 
   loadMoreClick(event) {
     event.preventDefault();
-    let target = event.target;
-    if (target === this.btnLoadMore) {
+    let btn = event.target.closest('button');
+    if (btn === this.btnLoadMore) {
       this.loadVerses();
     }
   }

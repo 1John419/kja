@@ -220,15 +220,15 @@ class SettingView {
 
   scrollClick(event) {
     event.preventDefault();
-    let target = event.target;
-    if (this.divCarouselFont.contains(target)) {
-      this.fontClick(target);
-    } else if (this.divSelectorFontSize.contains(target)) {
-      this.fontSizeClick(target);
-    } else if (this.divSelectorThemeType.contains(target)) {
-      this.themeTypeClick(target);
-    } else if (this.divCarouselTheme.contains(target)) {
-      this.themeClick(target);
+    let btn = event.target.closest('button');
+    if (this.divCarouselFont.contains(btn)) {
+      this.fontClick(btn);
+    } else if (this.divSelectorFontSize.contains(btn)) {
+      this.fontSizeClick(btn);
+    } else if (this.divSelectorThemeType.contains(btn)) {
+      this.themeTypeClick(btn);
+    } else if (this.divCarouselTheme.contains(btn)) {
+      this.themeClick(btn);
     }
   }
 

@@ -65,8 +65,8 @@ class BookmarkImportView {
 
   dialogClick(event) {
     event.preventDefault();
-    let target = event.target;
-    if (target === this.btnImport) {
+    let btn = event.target.closest('button');
+    if (btn === this.btnImport) {
       this.importClick();
     }
   }

@@ -70,8 +70,8 @@ class SearchLookupView {
 
   dialogClick(event) {
     event.preventDefault();
-    let target = event.target;
-    if (target === this.btnSearch) {
+    let btn = event.target.closest('button');
+    if (btn === this.btnSearch) {
       this.searchClick();
     }
   }

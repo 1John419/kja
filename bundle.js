@@ -3194,8 +3194,8 @@
 
     dialogClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnSave) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnSave) {
         this.saveClick();
       }
     }
@@ -3323,8 +3323,8 @@
 
     dialogClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnDelete) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnDelete) {
         this.deleteClick();
       }
     }
@@ -3447,8 +3447,8 @@
 
     dialogClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnSave) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnSave) {
         this.saveClick();
       }
     }
@@ -3695,8 +3695,8 @@
 
     dialogClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnImport) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnImport) {
         this.importClick();
       }
     }
@@ -4831,8 +4831,8 @@
 
     loadMoreClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnLoadMore) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnLoadMore) {
         this.loadVerses();
       }
     }
@@ -5435,8 +5435,8 @@
 
     dialogClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (target === this.btnSearch) {
+      let btn = event.target.closest('button');
+      if (btn === this.btnSearch) {
         this.searchClick();
       }
     }
@@ -6194,15 +6194,15 @@
 
     scrollClick(event) {
       event.preventDefault();
-      let target = event.target;
-      if (this.divCarouselFont.contains(target)) {
-        this.fontClick(target);
-      } else if (this.divSelectorFontSize.contains(target)) {
-        this.fontSizeClick(target);
-      } else if (this.divSelectorThemeType.contains(target)) {
-        this.themeTypeClick(target);
-      } else if (this.divCarouselTheme.contains(target)) {
-        this.themeClick(target);
+      let btn = event.target.closest('button');
+      if (this.divCarouselFont.contains(btn)) {
+        this.fontClick(btn);
+      } else if (this.divSelectorFontSize.contains(btn)) {
+        this.fontSizeClick(btn);
+      } else if (this.divSelectorThemeType.contains(btn)) {
+        this.themeTypeClick(btn);
+      } else if (this.divCarouselTheme.contains(btn)) {
+        this.themeClick(btn);
       }
     }
 

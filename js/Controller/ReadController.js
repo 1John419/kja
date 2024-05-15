@@ -1,8 +1,6 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
+import { queue } from '../CommandQueue.js';
 
 const SIDEBAR_WIDTH = 320;
 
@@ -66,6 +64,7 @@ class ReadController {
   initializeApp() {
     this.setPanes();
     this.currentPanes = this.panes;
+    queue.publish('db.restore', null);
     queue.publish('bookmark.restore', null);
     queue.publish('navigator.restore', null);
     queue.publish('search.restore', null);

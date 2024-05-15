@@ -1,6 +1,6 @@
 {
   "background_color": "transparent",
-  "description": "Offline King James Apocrypha Search",
+  "description": "King James Apocrypha Search",
   "dir": "ltr",
   "display": "standalone",
   "icons": [
@@ -31,9 +31,25 @@
   ],
   "id": "/",
   "lang": "en",
-  "name": "Offline King James Apocrypha Search",
+  "name": "King James Apocrypha Search",
   "orientation": "any",
   "scope": "/",
+  "screenshots": [
+    {
+    "form_factor": "narrow",
+    "label": "Android Screenshot",
+    "sizes": "1080x2220",
+    "src": "/webp/android.webp",
+    "type": "image/webp"
+    },
+    {
+      "form_factor": "wide",
+      "label": "Desktop Screenshot",
+      "sizes": "816x960",
+      "src": "/webp/desktop.webp",
+      "type": "image/webp"
+      }
+  ],
   "short_name": "KJA",
   "start_url": "/",
   "theme_color": "transparent"

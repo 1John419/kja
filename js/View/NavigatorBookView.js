@@ -1,26 +1,16 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
-import {
-  templateElement,
-  templatePage,
-  templateScroll,
-  templateToolbarLower,
-  templateToolbarUpper,
-} from '../template.js';
-import {
-  tomeBooks,
-} from '../data/tomeDb.js';
-import {
-  bookLongName,
-  bookShortName,
-} from '../data/tomeIdx.js';
+import { queue } from '../CommandQueue.js';
+import { template } from '../template.js';
+import { tomeIdx } from '../data/tomeIdx.js';
+import { tomeLists } from '../data/tomeLists.js';
+
+const greekFirstIdx = 39;
+const indices = [...Array(66).keys()];
 
 const lowerToolSet = [
-  { type: 'btn', icon: 'back', ariaLabel: 'Back' },
-  { type: 'btn', icon: 'navigator-chapter', ariaLabel: 'Chapter' },
+  { type: 'btn', icon: 'back', ariaLabel: null },
+  { type: 'btn', icon: 'navigator-chapter', ariaLabel: null },
 ];
 
 const upperToolSet = [
@@ -47,55 +37,54 @@ class NavigatorBookView {
     if (activeBtn) {
       activeBtn.classList.remove('btn-book--active');
     }
-    let selector = `.btn-book[data-book-idx="${bookIdx}"]`;
+    const selector = `.btn-book[data-book-idx="${bookIdx}"]`;
     activeBtn = this.list.querySelector(selector);
     activeBtn.classList.add('btn-book--active');
   }
 
-  buildApocryphaList() {
-    let booksApocrypha = document.createElement('div');
-    booksApocrypha.classList.add('content', 'content--apocrypha-book');
-    for (let idx of [...Array(tomeBooks.length).keys()]) {
-      let btn = this.buildBtnBook(idx);
-      booksApocrypha.appendChild(btn);
+  buildApocList() {
+    const books = document.createElement('div');
+    books.classList.add('content', 'content--books');
+    for (const idx of [...Array(tomeLists.books.length).keys()]) {
+      const btn = this.buildBtnBook(idx);
+      books.appendChild(btn);
     }
-    return booksApocrypha;
+    return books;
   }
 
-  buildBooklist() {
-    let booksApocrypha = this.buildApocryphaList();
-    this.list.appendChild(booksApocrypha);
+  buildBookList() {
+    const books = this.buildApocList();
+    this.list.appendChild(books);
   }
 
   buildBtnBook(bookIdx) {
-    let btn = document.createElement('button');
+    const btn = document.createElement('div');
     btn.classList.add('btn-book');
     btn.dataset.bookIdx = bookIdx;
-    btn.textContent = tomeBooks[bookIdx][bookLongName];
-    btn.setAttribute('aria-label', tomeBooks[bookIdx][bookLongName]);
+    btn.textContent = tomeLists.books[bookIdx][tomeIdx.book.longName];
     return btn;
   }
 
   buildPage() {
-    this.page = templatePage('navigator-book');
+    this.page = template.page('navigator-book');
 
-    this.toolbarUpper = templateToolbarUpper(upperToolSet);
+    this.toolbarUpper = template.toolbarUpper(upperToolSet);
     this.page.appendChild(this.toolbarUpper);
 
-    this.scroll = templateScroll('navigator-book');
-    this.list = templateElement('div', 'list', 'navigator-book', null, null);
+    this.scroll = template.scroll('navigator-book');
+    this.list = template.element('div', 'list', 'navigator-book', null, null);
     this.scroll.appendChild(this.list);
     this.page.appendChild(this.scroll);
 
-    this.toolbarLower = templateToolbarLower(lowerToolSet);
+    this.toolbarLower = template.toolbarLower(lowerToolSet);
     this.page.appendChild(this.toolbarLower);
 
-    let container = document.querySelector('.container');
+    const container = document.querySelector('.container');
     container.appendChild(this.page);
   }
 
   contentClick(btn) {
-    let bookIdx = parseInt(btn.dataset.bookIdx);
+    const bookIdx = parseInt(btn.dataset.bookIdx);
     queue.publish('navigator-book.select', bookIdx);
   }
 
@@ -114,12 +103,12 @@ class NavigatorBookView {
     this.addListeners();
     this.subscribe();
 
-    this.buildBooklist();
+    this.buildBookList();
   }
 
   listClick(event) {
     event.preventDefault();
-    let btn = event.target.closest('button');
+    const btn = event.target.closest('div.btn-book');
     if (btn) {
       if (btn.classList.contains('btn-book')) {
         this.contentClick(btn);
@@ -146,7 +135,7 @@ class NavigatorBookView {
 
   toolbarLowerClick(event) {
     event.preventDefault();
-    let btn = event.target.closest('button');
+    const btn = event.target.closest('div.btn-icon');
     if (btn) {
       if (btn === this.btnBack) {
         queue.publish('navigator.back', null);

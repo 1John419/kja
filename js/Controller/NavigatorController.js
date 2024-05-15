@@ -1,15 +1,8 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
-import {
-  tomeBooks,
-} from '../data/tomeDb.js';
-import {
-  bookFirstChapterIdx,
-  bookLastChapterIdx,
-} from '../data/tomeIdx.js';
+import { queue } from '../CommandQueue.js';
+import { tomeIdx } from '../data/tomeIdx.js';
+import { tomeLists } from '../data/tomeLists.js';
 
 class NavigatorController {
 
@@ -25,11 +18,11 @@ class NavigatorController {
     this.lastBookIdx = bookIdx;
     if (this.bookSelectPending) {
       this.bookSelectPending = false;
-      let book = tomeBooks[bookIdx];
-      this.chapterCount = book[bookLastChapterIdx] -
-        book[bookFirstChapterIdx] + 1;
+      const book = tomeLists.books[bookIdx];
+      this.chapterCount = book[tomeIdx.book.lastChapterIdx] -
+        book[tomeIdx.book.firstChapterIdx] + 1;
       if (this.panes > 1 || this.chapterCount === 1) {
-        let chapterIdx = tomeBooks[bookIdx][bookFirstChapterIdx];
+        const chapterIdx = tomeLists.books[bookIdx][tomeIdx.book.firstChapterIdx];
         queue.publish('chapterIdx.change', chapterIdx);
       } else {
         queue.publish('navigator.task.change', 'navigator-chapter');
@@ -48,8 +41,8 @@ class NavigatorController {
     }
   }
 
-  chapterIdxUpdate() {
-    queue.publish('read.scroll-to-top', null);
+  chapterIdxUpdate(chapterIdx) {
+    this.chapterIdx = chapterIdx;
     if (this.sidebar === 'navigator') {
       if (this.panes === 1) {
         queue.publish('sidebar.change', 'none');
@@ -93,8 +86,8 @@ class NavigatorController {
       this.bookIdxUpdate(bookIdx);
     });
 
-    queue.subscribe('chapterIdx.update', () => {
-      this.chapterIdxUpdate();
+    queue.subscribe('chapterIdx.update', (chapterIdx) => {
+      this.chapterIdxUpdate(chapterIdx);
     });
 
     queue.subscribe('navigator-book', () => {

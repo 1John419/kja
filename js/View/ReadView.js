@@ -1,46 +1,25 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
-import {
-  templateAcrostic,
-  templateElement,
-  templateToolbarLower,
-  templatePage,
-  templateScroll,
-  templateToolbarUpper,
-} from '../template.js';
-import {
-  centerScrollElement,
-  removeAllChildren,
-  sideScrollElement,
-} from '../util.js';
-import {
-  tomeChapters,
-} from '../data/tomeDb.js';
-import {
-  chapterName,
-  verseNum,
-  verseText,
-} from '../data/tomeIdx.js';
+import { queue } from '../CommandQueue.js';
+import { template } from '../template.js';
+import { util } from '../util.js';
+import { tomeIdx } from '../data/tomeIdx.js';
+import { tomeLists } from '../data/tomeLists.js';
 
 const lowerToolSet = [
-  { type: 'btn', icon: 'navigator', ariaLabel: 'Navigator' },
-  { type: 'btn', icon: 'bookmark', ariaLabel: 'Bookmark' },
-  { type: 'btn', icon: 'search', ariaLabel: 'Search' },
-  { type: 'btn', icon: 'setting', ariaLabel: 'Setting' },
-  { type: 'btn', icon: 'help', ariaLabel: 'Help' },
-  { type: 'btn', icon: 'column-mode', ariaLabel: 'Column Mode' },
+  { type: 'btn', icon: 'navigator', ariaLabel: null },
+  { type: 'btn', icon: 'bookmark', ariaLabel: null },
+  { type: 'btn', icon: 'search', ariaLabel: null },
+  { type: 'btn', icon: 'setting', ariaLabel: null },
+  { type: 'btn', icon: 'help', ariaLabel: null },
+  { type: 'btn', icon: 'column-mode', ariaLabel: null },
 ];
 
 const upperToolSet = [
-  { type: 'btn', icon: 'prev', ariaLabel: 'Previous Chapter' },
+  { type: 'btn', icon: 'prev', ariaLabel: null },
   { type: 'btn-banner', cssModifier: 'read', text: 'Toogle Clipboard' },
-  { type: 'btn', icon: 'next', ariaLabel: 'Next Chapter' },
+  { type: 'btn', icon: 'next', ariaLabel: null },
 ];
-
-const matthewChapterIdx = 929;
 
 class ReadView {
 
@@ -76,48 +55,59 @@ class ReadView {
   }
 
   buildPage() {
-    this.page = templatePage('read');
+    this.page = template.page('read');
     this.page.classList.remove('page--hide');
 
-    this.toolbarUpper = templateToolbarUpper(upperToolSet);
+    this.toolbarUpper = template.toolbarUpper(upperToolSet);
     this.page.appendChild(this.toolbarUpper);
 
-    this.scroll = templateScroll('read');
-    this.list = templateElement('div', 'list', 'read', null, null);
+    this.scroll = template.scroll('read');
+    this.list = template.element('div', 'list', 'read', null, null);
     this.scroll.appendChild(this.list);
     this.page.appendChild(this.scroll);
 
-    this.toolbarLower = templateToolbarLower(lowerToolSet);
+    this.toolbarLower = template.toolbarLower(lowerToolSet);
     this.page.appendChild(this.toolbarLower);
 
-    let container = document.querySelector('.container');
+    const container = document.querySelector('.container');
     container.appendChild(this.page);
   }
 
   buildVerse(verseObj) {
-    let verse = templateElement('div', 'verse', null, null, null);
+    const verse = document.createElement('div');
+    verse.classList.add('btn-verse');
     verse.dataset.verseIdx = verseObj.k;
-    let verseNum = this.buildVerseNum(verseObj);
+    const verseNum = this.buildVerseNum(verseObj);
     verse.appendChild(verseNum);
-    let acrostic = templateAcrostic(verseObj);
-    if (acrostic) {
-      verse.appendChild(acrostic);
-    }
-    let text = this.buildVerseText(verseObj);
+    const text = template.element('span', 'verse-text', null, null, verseObj.v[tomeIdx.verse.text]);
     verse.appendChild(text);
     return verse;
   }
 
   buildVerseNum(verseObj) {
-    let num = templateElement('span', 'verse-num', null, null,
-      verseObj.v[verseNum] + ' ');
+    const num = template.element('span', 'verse-num', null, null, verseObj.v[tomeIdx.verse.num] + ' ');
     return num;
   }
 
-  buildVerseText(verseObj) {
-    let text = templateElement('span', 'verse-text', null, null,
-      verseObj.v[verseText]);
-    return text;
+  changeFont() {
+    if (this.lastFont) {
+      this.list.classList.remove(this.lastFont.fontClass);
+    }
+    this.list.classList.add(this.font.fontClass);
+  }
+
+  changeFontSize() {
+    if (this.lastFontSize) {
+      this.list.classList.remove(this.lastFontSize);
+    }
+    this.list.classList.add(this.fontSize);
+  }
+
+  changeFontVariant() {
+    if (this.lastFontVariant) {
+      this.list.classList.remove(this.lastFontVariant);
+    }
+    this.list.classList.add(this.fontVariant);
   }
 
   changeTheme() {
@@ -129,10 +119,6 @@ class ReadView {
 
   chapterIdxUpdate(chapterIdx) {
     this.chapterIdx = chapterIdx;
-    this.getVerseText
-    this.updateBanner();
-    this.updateVerses();
-    this.refreshVerseBookmarks();
   }
 
   columnModeUpdate(columnMode) {
@@ -141,16 +127,22 @@ class ReadView {
     this.updateColumnMode();
   }
 
+  fontUpdate(font) {
+    this.font = font;
+    this.changeFont();
+    this.lastFont = this.font;
+  }
+
   fontSizeUpdate(fontSize) {
     this.fontSize = fontSize;
-    this.updateFontSize();
+    this.changeFontSize();
     this.lastFontSize = this.fontSize;
   }
 
-  fontUpdate(font) {
-    this.font = font;
-    this.updateFont();
-    this.lastFont = this.font;
+  fontVariantUpdate(fontVariant) {
+    this.fontVariant = fontVariant;
+    this.changeFontVariant();
+    this.lastFontVariant = this.fontVariant;
   }
 
   getElements() {
@@ -166,10 +158,6 @@ class ReadView {
     this.btnSetting = this.toolbarLower.querySelector('.btn-icon--setting');
     this.btnHelp = this.toolbarLower.querySelector('.btn-icon--help');
     this.btnColumnMode = this.toolbarLower.querySelector('.btn-icon--column-mode');
-  }
-
-  getVerseText(verseObj) {
-    return verseObj.v[verseText];
   }
 
   helpHide() {
@@ -193,19 +181,21 @@ class ReadView {
     this.subscribe();
     this.lastFont = null;
     this.lastFontSize = null;
+    this.lastFontVariant = null;
     this.clipboardMode = false;
+    this.scrollVerseIdx = null;
   }
 
   listClick(event) {
     event.preventDefault();
     if (!document.getSelection().toString()) {
-      let verse = event.target.closest('div.verse');
-      if (verse) {
+      const btnVerse = event.target.closest('div.btn-verse');
+      if (btnVerse) {
         if (this.clipboardMode) {
-          let text = `${this.btnBanner.textContent}:${verse.textContent}`;
-          navigator.clipboard.writeText(text);
+          const text = `${this.btnBanner.textContent}:${btnVerse.textContent}`;
+          util.writeClipboardText(text);
         } else {
-          this.verseClick(verse);
+          this.verseClick(btnVerse);
         }
       }
     }
@@ -219,16 +209,8 @@ class ReadView {
     this.btnNavigator.classList.add('btn-icon--active');
   }
 
-  navigatorMapsUpdate(mapObjs) {
-    this.mapObjs = mapObjs;
-  }
-
-  navigatorVersesUpdate(verseObjs) {
-    this.verseObjs = verseObjs;
-  }
-
   refreshBookmarks(element) {
-    let verseIdx = parseInt(element.dataset.verseIdx);
+    const verseIdx = parseInt(element.dataset.verseIdx);
     if (this.activeFolder.bookmarks.indexOf(verseIdx) === -1) {
       element.classList.remove('verse--bookmark');
     } else {
@@ -237,27 +219,25 @@ class ReadView {
   }
 
   refreshVerseBookmarks() {
-    let verses = [...this.list.querySelectorAll('.verse')];
-    for (let element of verses) {
+    const verses = [...this.list.querySelectorAll('.btn-verse')];
+    for (const element of verses) {
       this.refreshBookmarks(element);
     }
   }
 
-  scrollToTop() {
-    this.scroll.scrollTop = 0;
-    this.scroll.scrollLeft = 0;
-  }
-
-  scrollToVerse(verseIdx) {
-    let element = this.list.querySelector(
-      `[data-verse-idx="${verseIdx}"]`);
+  scrollToVerse() {
+    const element = this.list.querySelector(`[data-verse-idx="${this.scrollVerseIdx}"]`);
     if (element) {
       if (this.columnMode) {
-        sideScrollElement(this.scroll, element);
+        util.sideScrollElement(this.scroll, element);
       } else {
-        centerScrollElement(this.scroll, element);
+        util.centerScrollElement(this.scroll, element);
       }
     }
+  }
+
+  scrollVerseIdxUpdate(verseIdx) {
+    this.scrollVerseIdx = verseIdx;
   }
 
   searchHide() {
@@ -309,6 +289,10 @@ class ReadView {
       this.fontSizeUpdate(fontSize);
     });
 
+    queue.subscribe('font-variant.update', (fontVariant) => {
+      this.fontVariantUpdate(fontVariant);
+    });
+
     queue.subscribe('help.hide', () => {
       this.helpHide();
     });
@@ -322,12 +306,6 @@ class ReadView {
     queue.subscribe('navigator.show', () => {
       this.navigatorShow();
     });
-    queue.subscribe('navigator.maps.update', (mapObjs) => {
-      this.navigatorMapsUpdate(mapObjs);
-    });
-    queue.subscribe('navigator.verses.update', (verseObjs) => {
-      this.navigatorVersesUpdate(verseObjs);
-    });
 
     queue.subscribe('read.column-mode.update', (columnMode) => {
       this.columnModeUpdate(columnMode);
@@ -335,14 +313,14 @@ class ReadView {
     queue.subscribe('read.hide', () => {
       this.hide();
     });
-    queue.subscribe('read.scroll-to-top', () => {
-      this.scrollToTop();
-    });
-    queue.subscribe('read.scroll-to-verse', (verseIdx) => {
-      this.scrollToVerse(verseIdx);
+    queue.subscribe('read.scroll-verse-idx', (verseIdx) => {
+      this.scrollVerseIdxUpdate(verseIdx);
     });
     queue.subscribe('read.show', () => {
       this.show();
+    });
+    queue.subscribe('read.verse-objs.update', (verseObjs) => {
+      this.verseObjsUpdate(verseObjs);
     });
 
     queue.subscribe('search.hide', () => {
@@ -385,7 +363,7 @@ class ReadView {
 
   toolbarLowerClick(event) {
     event.preventDefault();
-    let btn = event.target.closest('button');
+    const btn = event.target.closest('div.btn-icon');
     if (btn) {
       if (btn === this.btnColumnMode ||
         !btn.classList.contains('btn-icon--active')
@@ -409,7 +387,7 @@ class ReadView {
 
   toolbarUpperClick(event) {
     event.preventDefault();
-    let btn = event.target.closest('button');
+    const btn = event.target.closest('div');
     if (btn) {
       if (btn === this.btnBanner) {
         this.toogleClipboardMode();
@@ -422,7 +400,7 @@ class ReadView {
   }
 
   updateBanner() {
-    this.btnBanner.textContent = tomeChapters[this.chapterIdx][chapterName];
+    this.btnBanner.textContent = tomeLists.chapters[this.chapterIdx][tomeIdx.chapter.name];
   }
 
   updateColumnMode() {
@@ -441,37 +419,32 @@ class ReadView {
     }
   }
 
-  updateFont() {
-    if (this.lastFont) {
-      this.list.classList.remove(this.lastFont.fontClass);
-    }
-    this.list.classList.add(this.font.fontClass);
-  }
-
-  updateFontSize() {
-    if (this.lastFontSize) {
-      this.list.classList.remove(this.lastFontSize);
-    }
-    this.list.classList.add(this.fontSize);
-  }
-
   updateVerses() {
-    removeAllChildren(this.list);
-    let fragment = document.createDocumentFragment();
-    for (let verseObj of this.verseObjs) {
-      let verse = this.buildVerse(verseObj);
+    this.scroll.scrollTop = 0;
+    util.removeAllChildren(this.list);
+    const fragment = document.createDocumentFragment();
+    for (const verseObj of this.verseObjs) {
+      const verse = this.buildVerse(verseObj);
       fragment.appendChild(verse);
     }
     this.list.appendChild(fragment);
   }
 
-  verseClick(verse) {
-    let verseIdx = parseInt(verse.dataset.verseIdx);
-    if (verse.classList.contains('verse--bookmark')) {
+  verseClick(btnVerse) {
+    const verseIdx = parseInt(btnVerse.dataset.verseIdx);
+    if (btnVerse.classList.contains('verse--bookmark')) {
       queue.publish('read.bookmark.delete', verseIdx);
     } else {
       queue.publish('read.bookmark.add', verseIdx);
     }
+  }
+
+  verseObjsUpdate(verseObjs) {
+    this.verseObjs = verseObjs;
+    this.updateBanner();
+    this.updateVerses();
+    this.refreshVerseBookmarks();
+    this.scrollToVerse(this.scrollVerseIdx);
   }
 
 }

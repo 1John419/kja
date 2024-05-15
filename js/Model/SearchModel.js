@@ -1,17 +1,9 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
-import {
-  SearchEngine,
-} from '../SearchEngine.js';
-import {
-  tomeBinVerses,
-} from '../data/binIdx.js';
-import {
-  tomeDb,
-} from '../data/tomeDb.js';
+import { queue } from '../CommandQueue.js';
+import { SearchEngine } from '../SearchEngine.js';
+import { binIdx } from '../data/binIdx.js';
+import { tomeDb } from '../Model/DbModel.js';
 
 const searchResultReroute = [
   'search-filter', 'search-history',
@@ -20,7 +12,7 @@ const validTasks = [
   'search-result', 'search-lookup', 'search-filter', 'search-history',
 ];
 
-const DEFAULT_QUERY = 'lord of israel';
+const DEFAULT_QUERY = 'the lord our god';
 
 class SearchModel {
 
@@ -63,7 +55,7 @@ class SearchModel {
   }
 
   historyDelete(str) {
-    let index = this.searchHistory.indexOf(str);
+    const index = this.searchHistory.indexOf(str);
     this.searchHistory.splice(index, 1);
     this.updateHistory();
   }
@@ -80,7 +72,7 @@ class SearchModel {
   }
 
   async queryChange(searchQuery) {
-    let rig = await this.engine.performSearch(searchQuery);
+    const rig = await this.engine.performSearch(searchQuery);
     if (rig.state === 'ERROR') {
       let message;
       if (rig.type === 'EMPTY') {
@@ -90,13 +82,15 @@ class SearchModel {
       } else if (rig.wordStatus !== 'OK') {
         message = rig.wordStatus;
       }
+      this.searchQuery = '';
+      this.rig = null;
       queue.publish('search.query.error', message);
     } else {
       this.rig = rig;
       this.searchQuery = searchQuery;
       this.saveQuery();
       this.addHistory();
-      await this.updateSearchVerses();
+      await this.updateSearchVerseObjs();
       queue.publish('rig.update', this.rig);
       this.resetFilter();
       queue.publish('search.query.update', this.searchQuery);
@@ -104,7 +98,7 @@ class SearchModel {
   }
 
   resetFilter() {
-    let filter = this.tomeFilter();
+    const filter = this.tomeFilter();
     this.filterChange(filter);
   }
 
@@ -116,7 +110,7 @@ class SearchModel {
   }
 
   restoreFilter() {
-    let defaultFilter = this.tomeFilter();
+    const defaultFilter = this.tomeFilter();
     let searchFilter = localStorage.getItem('searchFilter');
     if (!searchFilter) {
       searchFilter = defaultFilter;
@@ -134,7 +128,7 @@ class SearchModel {
   }
 
   restoreHistory() {
-    let defaultHistory = [];
+    const defaultHistory = [];
     let searchHistory = localStorage.getItem('searchHistory');
     if (!searchHistory) {
       searchHistory = defaultHistory;
@@ -156,7 +150,7 @@ class SearchModel {
   }
 
   async restoreQuery() {
-    let defaultQuery = DEFAULT_QUERY;
+    const defaultQuery = DEFAULT_QUERY;
     let searchQuery = localStorage.getItem('searchQuery');
     if (!searchQuery) {
       searchQuery = defaultQuery;
@@ -174,7 +168,7 @@ class SearchModel {
   }
 
   restoreTask() {
-    let defaultTask = 'search-result';
+    const defaultTask = 'search-result';
     let searchTask = localStorage.getItem('searchTask');
     if (!searchTask) {
       searchTask = defaultTask;
@@ -251,10 +245,12 @@ class SearchModel {
     queue.publish('search.history.update', this.searchHistory);
   }
 
-  async updateSearchVerses() {
-    this.searchVerseObjs = await tomeDb.verses.bulkGet(
-      this.rig.tomeBin[tomeBinVerses]);
-    queue.publish('search.verses.update', this.searchVerseObjs);
+  async updateSearchVerseObjs() {
+    if (this.rig === null) {
+      return;
+    }
+    this.searchVerseObjs = await tomeDb.verses.bulkGet(this.rig.tomeBin[binIdx.tomeBinIdx.verses]);
+    queue.publish('search.verse-objs.update', this.searchVerseObjs);
   }
 
 }

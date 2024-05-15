@@ -1,23 +1,33 @@
 'use strict';
 
-export const bookLongName = 0;
-export const bookShortName = 1;
-export const bookFirstVerseIdx = 2;
-export const bookLastVerseIdx = 3;
-export const bookFirstChapterIdx = 4;
-export const bookLastChapterIdx = 5;
+export const tomeIdx = {};
 
-export const chapterBookIdx = 0;
-export const chapterName = 1;
-export const chapterNum = 2;
-export const chapterFirstVerseIdx = 3;
-export const chapterLastVerseIdx = 4;
+tomeIdx.book = {
+  longName: 0,
+  shortName: 1,
+  firstVerseIdx: 2,
+  lastVerseIdx: 3,
+  firstChapterIdx: 4,
+  lastChapterIdx: 5,
+};
 
-export const verseText = 0;
-export const verseBookIdx = 1;
-export const verseChapterIdx = 2;
-export const verseCitation = 3;
-export const verseNum = 4;
+tomeIdx.chapter = {
+  bookIdx: 0,
+  name: 1,
+  num: 2,
+  firstVerseIdx: 3,
+  lastVerseIdx: 4,
+};
 
-export const wordVerseIdx = 0;
-export const wordCount = 1;
+tomeIdx.verse = {
+  text: 0,
+  bookIdx: 1,
+  chapterIdx: 2,
+  citation: 3,
+  num: 4,
+};
+
+tomeIdx.word = {
+  verseIdx: 0,
+  count: 1,
+};

@@ -1,13 +1,20 @@
 'use strict';
 
-import {
-  queue,
-} from '../CommandQueue.js';
+import { queue } from '../CommandQueue.js';
+import { util } from '../util.js';
+import { tomeIdx} from '../data/tomeIdx.js';
+import { tomeLists} from '../data/tomeLists.js';
+import { tomeDb } from '../Model/DbModel.js';
 
 class ReadModel {
 
   constructor() {
     this.initialize();
+  }
+
+  chapterIdxUpdate(chapterIdx) {
+    this.chapterIdx = chapterIdx;
+    this.updateReadVerseObjs();
   }
 
   columnModeChange(columnMode) {
@@ -35,7 +42,7 @@ class ReadModel {
   }
 
   restoreColumnMode() {
-    let defaultColumnMode = false;
+    const defaultColumnMode = false;
     let columnMode = localStorage.getItem('columnMode');
     if (!columnMode) {
       columnMode = defaultColumnMode;
@@ -53,7 +60,7 @@ class ReadModel {
   }
 
   restoreSidebar() {
-    let defaultSidebar = this.panes > 1 ? 'navigator' : 'none';
+    const defaultSidebar = this.panes > 1 ? 'navigator' : 'none';
     let sidebar = localStorage.getItem('sidebar');
     if (!sidebar) {
       sidebar = defaultSidebar;
@@ -88,6 +95,10 @@ class ReadModel {
   }
 
   subscribe() {
+    queue.subscribe('chapterIdx.update', (chapterIdx) => {
+      this.chapterIdxUpdate(chapterIdx);
+    });
+
     queue.subscribe('panes.change', (panes) => {
       this.panesChange(panes);
     });
@@ -104,6 +115,13 @@ class ReadModel {
     });
   }
 
+  async updateReadVerseObjs() {
+    const chapter = tomeLists.chapters[this.chapterIdx];
+    const keys = util.range(chapter[tomeIdx.chapter.firstVerseIdx],
+      chapter[tomeIdx.chapter.lastVerseIdx] + 1);
+    this.verseObjs = await tomeDb.verses.bulkGet(keys);
+    queue.publish('read.verse-objs.update', this.verseObjs);
+  }
 }
 
 export { ReadModel };

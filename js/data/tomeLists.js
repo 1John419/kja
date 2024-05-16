@@ -21,5 +21,5 @@ export const firstVerseIdxByChapterIdx = (chapterIdx) => {
 export const initializeTomeLists = async () => {
   progress('loading kja lists...');
   tomeLists = await dbUtil.fetchJson(url);
-  tomeLists.tomeName = 'KJA';
+  tomeLists.tomeName = 'kja';
 };

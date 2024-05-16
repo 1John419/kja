@@ -260,7 +260,7 @@
   const initializeTomeLists = async () => {
     progress('loading kja lists...');
     tomeLists = await dbUtil.fetchJson(url);
-    tomeLists.tomeName = 'kja';
+    tomeLists.tomeName = 'KJA';
   };
 
   class ReadModel {

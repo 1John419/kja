@@ -2,10 +2,11 @@
 
 const appCaches = [
   {
-    name: 'core-20240515.01',
+    name: 'core-20240516.01',
     urls: [
       '/',
       '/bundle.js',
+      '/favicon.png',
       '/help/about.html',
       '/icons.svg',
       '/index.html',
@@ -61,6 +62,7 @@ const appCaches = [
   {
     name: 'png-20240515.01',
     urls: [
+      '/png/icon-032.png',
       '/png/icon-192.png',
       '/png/icon-512.png',
       '/png/maskable-icon-192.png',

@@ -2,7 +2,7 @@
 
 const appCaches = [
   {
-    name: 'core-20250211.02',
+    name: 'core-20250211.03',
     urls: [
       '/',
       '/bundle.js',

@@ -22,8 +22,6 @@ export const helpTopicList = [
   { topic: 'search', name: 'Search' },
   { topic: 'setting', name: 'Setting' },
   { topic: 'help', name: 'Help' },
-  { topic: 'the-acts-of-peter', name: 'The Acts of Peter' },
-  { topic: 'thats-my-king', name: 'That\'s MY KING!' },
 ];
 
 const templateBtnTopic = (helpTopic) => {

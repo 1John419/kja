@@ -7,8 +7,7 @@ const validTasks = [
 ];
 const validTopics = [
   'about', 'bookmark', 'clipboard-mode', 'help', 'name-mode', 'navigator',
-  'overview', 'read', 'search', 'setting', 'the-acts-of-peter',
-  'thats-my-king',
+  'overview', 'read', 'search', 'setting',
 ];
 
 class HelpModel {

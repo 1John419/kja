@@ -1,6 +1,6 @@
 {
   "background_color": "transparent",
-  "description": "King James Apocrypha Search",
+  "description": "KJA - King James Apocrypha",
   "dir": "ltr",
   "display": "standalone",
   "icons": [
@@ -31,7 +31,7 @@
   ],
   "id": "/",
   "lang": "en",
-  "name": "King James Apocrypha Search",
+  "name": "KJA - King James Apocrypha",
   "orientation": "any",
   "scope": "/",
   "screenshots": [
